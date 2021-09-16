@@ -1,5 +1,5 @@
 pub mod reader;
-use hex_literal::hex;
+use std::str::FromStr;
 use web3::types::H256;
 use serde::{Serialize, Deserialize};
 
@@ -30,7 +30,12 @@ async fn main() -> anyhow::Result<()> {
         .with(fmt_layer)
         .init();
 
-    
+    let topic_str = match std::env::var("TOPIC") {
+        Ok(x) => x,
+        Err(e) => panic!("please provide TOPIC {}", e),
+    };
+    let topic: H256 = H256::from_str(&topic_str).expect("invalid TOPIC");
+
     let endpoint = match std::env::var("RPC_ENDPOINT") {
         Ok(x) => x,
         Err(e) => panic!("please provide RPC_ENDPOINT {}", e),
@@ -48,7 +53,6 @@ async fn main() -> anyhow::Result<()> {
     let chain_id = web3.eth().chain_id().await?.as_u64();
     let batch_size = 10000u64;
 
-    let topic: H256 = hex!("59e98f4c18a6c92efe8c23bcbd74f0d71e271eebf9a95f9edefdbee17c01f270").into();
     let mut scanner = reader::Scanner::new(chain_id, genesis_block,None, batch_size);
     let _ = scanner.scan_for_topics(&web3, topic).await;
 
